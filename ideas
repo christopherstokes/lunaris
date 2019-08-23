@@ -1,0 +1,39 @@
+* states
+	- title
+	- planet flight
+		+ l/r movement
+		+
+	- space flight
+		+	corridor
+ - nav grid
+	- gameover
+	- win
+* camera
+	- bounding box
+* controls
+	- planet flight
+ - up/dwn = reversed
+	- l/r = normal
+	- fire button
+* entity
+ - x/y
+ - dx/dy
+ - spr/shape
+* enemy types
+
+
+story:
+
+aliens go into periodic
+stasus on the moon of
+solaris (lunaris)
+
+while in stasis humans 
+colonized their home planet
+
+you play as human ship 
+on rescue mission after the
+colonists after the aliens
+have awaken
+
+are we the baddies?
