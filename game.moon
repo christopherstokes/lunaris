@@ -40,7 +40,7 @@ terrain_lines_upd = ->
 	if #terrain_lines > 0
 		for lin=#terrain_lines, 1, -1
 			t_lin = terrain_lines[lin]
-			ease_lin = ease_in_quad((s_hei-t_lin.y)/(s_hei-horizon))
+			ease_lin = ease_in_quad((s_hei-t_lin.y)/(s_hei-horizon))/2
 			t_lin.dy += terrain_lines_acc * ease_lin
 			t_lin.y += t_lin.dy
 			
