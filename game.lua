@@ -1,3 +1,11 @@
+local ease_in_quad
+ease_in_quad = function(t)
+  return t * t
+end
+local ease_out_quad
+ease_out_quad = function(t)
+  return t * (2 - t)
+end
 local t = 0
 local s_wid = 240
 local s_hei = 136
@@ -123,14 +131,6 @@ local bullets = { }
 local friction = 0.90
 local terrain_lines = { }
 local terrain_lines_acc = 0.05
-local ease_in_quad
-ease_in_quad = function(t)
-  return t * t
-end
-local ease_out_quad
-ease_out_quad = function(t)
-  return t * (2 - t)
-end
 local terrain_lines_upd
 terrain_lines_upd = function()
   if (t % (math.ceil(1 / terrain_lines_acc) * 2) == 0) and (terrain_lines_acc ~= 0) then

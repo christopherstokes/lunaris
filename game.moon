@@ -3,6 +3,10 @@
 -- desc:   Space Shooter/Sim heavily inspired and informed by Solaris for Atari 2600
 -- script: moon
 
+-- tools
+ease_in_quad = (t) -> return t * t
+ease_out_quad = (t) -> return t * (2 - t)
+
 -- globals
 t=0
 s_wid = 240
@@ -58,9 +62,6 @@ friction = 0.90
 terrain_lines = {}
 
 terrain_lines_acc = 0.05
-
-ease_in_quad = (t) -> return t * t
-ease_out_quad = (t) -> return t * (2 - t)
 
 terrain_lines_upd = ->
 	if (t % (math.ceil(1/terrain_lines_acc) * 2) == 0) and (terrain_lines_acc != 0)
