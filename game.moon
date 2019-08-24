@@ -35,7 +35,7 @@ ease_in_quad = (t) -> return t * t
 ease_out_quad = (t) -> return t * (2 - t)
 
 terrain_lines_upd = ->
-	if t % math.floor(15-(terrain_lines_acc * 50)) == 0
+	if (t % (math.ceil(1/terrain_lines_acc) * 2) == 0) and (terrain_lines_acc != 0)
 		table.insert terrain_lines, {y: horizon, dy: 0}
 	if #terrain_lines > 0
 		for lin=#terrain_lines, 1, -1
@@ -73,9 +73,9 @@ ship = Entity 60,116,3,2,0.4
 
 ship.update = =>
 	if btn 0
-		if (terrain_lines_acc < 0.07) then terrain_lines_acc += 0.01
+		if (terrain_lines_acc < 0.12) then terrain_lines_acc += 0.0025
 	if btn 1
-		if (terrain_lines_acc > 0.03) then terrain_lines_acc -= 0.01
+		if (terrain_lines_acc >= 0.02) then terrain_lines_acc -= 0.0025
 	if btn 2	
 		@dx -= @acc
 		@turn_l = true
@@ -92,16 +92,22 @@ ship.update = =>
 	@x += @dx
 
 ship.draw = =>
+	-- acc_mod =  terrain_lines_acc * 20
+	acc_mod = 0
+
 	if @turn_l
-		tri(@x-2, @y, @x-4, @y+8, @x+4, @y+4, 14)
+		tri(@x-2, @y+2+acc_mod, @x-4, @y+10+acc_mod, @x+4, @y+6+acc_mod, 1) -- shadow
+		tri(@x-2, @y, @x-4, @y+8, @x+4, @y+4, 15) -- ship
 	elseif @turn_r
-		tri(@x+2, @y, @x-4, @y+4, @x+4, @y+8, 14)
+		tri(@x+2, @y+2+acc_mod, @x-4, @y+6+acc_mod, @x+4, @y+10+acc_mod, 1) -- shadow
+		tri(@x+2, @y, @x-4, @y+4, @x+4, @y+8, 15) -- ship
 	else
-		tri(@x, @y+2, @x-4, @y+8, @x+4, @y+8, 14)
+		tri(@x, @y+4+acc_mod, @x-4, @y+10+acc_mod, @x+4, @y+10+acc_mod, 1) -- shadow
+		tri(@x, @y+2, @x-4, @y+8, @x+4, @y+8, 15) -- ship
 
 
 export TIC=->
-	cls 2
+	cls 4
 
 	rect 0, horizon, s_wid, (s_hei+48)/2, 13
 	rect 0, horizon, s_wid, 1, 0
@@ -114,6 +120,9 @@ export TIC=->
 	ship\draw!
 	
 	t+=1
+	
+-- db16: 140c1c44243430346d4e4a4e854c30346524d04648757161597dced27d2c8595a16daa2cd2aa996dc2cadad45edeeed6
+-- cga16: 000000555555aaaaaaffffff0000aa5555ff00AA0055ff5500aaaa55ffffaa0000ff5555aa00aaff55ffaa5500ffff55
 
 
 -- <WAVES>
@@ -127,6 +136,6 @@ export TIC=->
 -- </SFX>
 
 -- <PALETTE>
--- 000:140c1c44243430346d4e4a4e854c30346524d04648757161597dced27d2c8595a16daa2cd2aa996dc2cadad45edeeed6
+-- 000:000000555555aaaaaaffffff0000aa5555ff00aa0055ff5500aaaa55ffffaa0000ff5555aa00aaff55ffaa5500ffff55
 -- </PALETTE>
 
