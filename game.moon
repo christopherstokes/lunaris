@@ -7,6 +7,13 @@
 ease_in_quad = (t) -> return t * t
 ease_out_quad = (t) -> return t * (2 - t)
 
+collides = (objA, objB) ->
+	if (objA.x < objB.x + objB.wid and
+		objA.x + objA.wid > objB.x and
+		objA.y < objB.y + objB.hei and
+		objA.y + objA.hei > objB.y)
+		return true
+
 -- globals
 t=0
 s_wid = 240
@@ -14,6 +21,11 @@ s_hei = 136
 
 -- land flight
 horizon = (s_hei-48)/2
+clsrange = horizon+32
+midrange = horizon+16
+farrange = horizon+8
+
+-- bullet distances
 
 -- classes
 class Entity
@@ -30,7 +42,7 @@ class Entity
 		@turn_r = false
 
 class Bullet extends Entity
-	new: (x, y, acc, r, col=3, dy=-1, max_dx=0, max_dy=2) =>
+	new: (x, y, acc, r=1, col=3, dy=-1, max_dx=0, max_dy=2) =>
 		super x,y,max_dx,max_dy,acc
 		@dy = dy
 		@r = r
@@ -43,18 +55,47 @@ class Bullet extends Entity
 
 		@y += @dy
 
-		if @y < horizon+40 then @r=1
-		if @y < horizon+16 then @r=0
+		if @y < clsrange then @r=0.5
+		if @y < midrange then @r=0
 
-		if @y < horizon - 4 or @y > s_hei
+		if @y < horizon - 2 or @y > s_hei
 			@alive = false
 		
 		else
-			if @r==0 then pix(@x, @y, @col)
-			else circ(@x, @y, @r, @col)
+			circ(@x, @y, @r, @col)
 
--- bullets
+class Enemy extends Entity
+	new: (x, y, acc, sp, col=3, dy=0, max_dx=0, max_dy=2) =>
+		super x,y,max_dx,max_dy,acc
+		@dy = dy
+		@sp = sp
+		@col = col
+		@scl = 0
+		@rot = 0
+
+	upd: =>
+		if math.abs(@dy) < math.abs(@max_dy)
+			if @dy < 0 then @dy -= @acc
+			if @dy > 0 then @dy += @acc
+
+		@y += @dy
+
+		@scl = 2
+		if @y < clsrange then @scl = 1
+		if @y < midrange then @scl = 0.5
+		if @y < farrange then @scl = 0
+
+		if @y > s_hei then @alive = false
+		else
+			if @scl == 0 then pix(@x, @y, @col)
+			elseif @scl == 0.5 then circ(@x, @y, 2, @col)
+			else 
+				sclOff = (@scl*8)/2
+				spr(@sp, @x-sclOff, @y-sclOff, 0, @scl, 0, @rot)
+
+-- entity tables
 bullets = {}
+enemies = {}
 
 -- flight section
 friction = 0.90
@@ -70,7 +111,7 @@ terrain_lines_upd = ->
 		for lin=#terrain_lines, 1, -1
 			t_lin = terrain_lines[lin]
 			ease_lin = ease_in_quad((s_hei-t_lin.y)/(s_hei-horizon))/2
-			t_lin.dy += terrain_lines_acc * ease_lin
+			t_lin.dy += (terrain_lines_acc * ease_lin)
 			t_lin.y += t_lin.dy
 			
 			if t_lin.y >= s_hei
@@ -98,13 +139,13 @@ terrain_mtns_draw = ->
 terrain_mtns_generate!
 
 -- ship
-ship = Entity 60,104,3,2,0.4
+ship = Entity 60,104,3,0,0.4
 
 ship.update = =>
 	if btn 0
-		if (terrain_lines_acc < 0.12) then terrain_lines_acc += 0.0025
+		if (terrain_lines_acc < 0.15) then terrain_lines_acc += 0.0025
 	if btn 1
-		if (terrain_lines_acc >= 0.02) then terrain_lines_acc -= 0.0025
+		if (terrain_lines_acc >= 0.04) then terrain_lines_acc -= 0.0025
 	if btn 2	
 		@dx -= @acc
 		@turn_l = true
@@ -118,7 +159,7 @@ ship.update = =>
 		@turn_l = false
 
 	if btnp 4
-		table.insert(bullets, Bullet(@x, @y, 0.05, 2))
+		table.insert(bullets, Bullet(@x, @y, 0.02, 1))
 	
 	@dx *= friction
 	@x += @dx
@@ -140,6 +181,9 @@ ship.draw = =>
 		tri(@x, @y+2, @x-4, @y+8, @x+4, @y+8, 15) -- ship
 		rect(@x-4, @y+9, 9, 1, 11)
 
+-- enemy
+en = Enemy(24, horizon-2, 0.001 , 1, 7, 0.5, 0, 1)
+table.insert(enemies, en)
 
 planet_flight_update = ->
 	cls 4
@@ -150,14 +194,21 @@ planet_flight_update = ->
 	terrain_mtns_draw!
 	terrain_lines_upd!
 
+	if #enemies > 0
+		for e=#enemies, 1, -1
+			enemies[e]\upd!
+			if not enemies[e].alive
+				table.remove(enemies, e)
+
 	if #bullets > 0
 		for b=#bullets, 1, -1
 			bullets[b]\upd!
 			if not bullets[b].alive
 				table.remove(bullets, b)
-
 	ship\update!
 	ship\draw!
+
+
 
 
 export TIC=->
@@ -167,6 +218,10 @@ export TIC=->
 -- db16: 140c1c44243430346d4e4a4e854c30346524d04648757161597dced27d2c8595a16daa2cd2aa996dc2cadad45edeeed6
 -- cga16: 000000555555aaaaaaffffff0000aa5555ff00AA0055ff5500aaaa55ffffaa0000ff5555aa00aaff55ffaa5500ffff55
 
+
+-- <TILES>
+-- 001:0000000000766700076666700667766006000060070000700070070000000000
+-- </TILES>
 
 -- <WAVES>
 -- 000:00000000ffffffff00000000ffffffff

@@ -6,10 +6,19 @@ local ease_out_quad
 ease_out_quad = function(t)
   return t * (2 - t)
 end
+local collides
+collides = function(objA, objB)
+  if (objA.x < objB.x + objB.wid and objA.x + objA.wid > objB.x and objA.y < objB.y + objB.hei and objA.y + objA.hei > objB.y) then
+    return true
+  end
+end
 local t = 0
 local s_wid = 240
 local s_hei = 136
 local horizon = (s_hei - 48) / 2
+local clsrange = horizon + 32
+local midrange = horizon + 16
+local farrange = horizon + 8
 local Entity
 do
   local _class_0
@@ -62,20 +71,16 @@ do
         end
       end
       self.y = self.y + self.dy
-      if self.y < horizon + 40 then
-        self.r = 1
+      if self.y < clsrange then
+        self.r = 0.5
       end
-      if self.y < horizon + 16 then
+      if self.y < midrange then
         self.r = 0
       end
-      if self.y < horizon - 4 or self.y > s_hei then
+      if self.y < horizon - 2 or self.y > s_hei then
         self.alive = false
       else
-        if self.r == 0 then
-          return pix(self.x, self.y, self.col)
-        else
-          return circ(self.x, self.y, self.r, self.col)
-        end
+        return circ(self.x, self.y, self.r, self.col)
       end
     end
   }
@@ -83,6 +88,9 @@ do
   setmetatable(_base_0, _parent_0.__base)
   _class_0 = setmetatable({
     __init = function(self, x, y, acc, r, col, dy, max_dx, max_dy)
+      if r == nil then
+        r = 1
+      end
       if col == nil then
         col = 3
       end
@@ -127,7 +135,97 @@ do
   end
   Bullet = _class_0
 end
+local Enemy
+do
+  local _class_0
+  local _parent_0 = Entity
+  local _base_0 = {
+    upd = function(self)
+      if math.abs(self.dy) < math.abs(self.max_dy) then
+        if self.dy < 0 then
+          self.dy = self.dy - self.acc
+        end
+        if self.dy > 0 then
+          self.dy = self.dy + self.acc
+        end
+      end
+      self.y = self.y + self.dy
+      self.scl = 2
+      if self.y < clsrange then
+        self.scl = 1
+      end
+      if self.y < midrange then
+        self.scl = 0.5
+      end
+      if self.y < farrange then
+        self.scl = 0
+      end
+      if self.y > s_hei then
+        self.alive = false
+      else
+        if self.scl == 0 then
+          return pix(self.x, self.y, self.col)
+        elseif self.scl == 0.5 then
+          return circ(self.x, self.y, 2, self.col)
+        else
+          local sclOff = (self.scl * 8) / 2
+          return spr(self.sp, self.x - sclOff, self.y - sclOff, 0, self.scl, 0, self.rot)
+        end
+      end
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  _class_0 = setmetatable({
+    __init = function(self, x, y, acc, sp, col, dy, max_dx, max_dy)
+      if col == nil then
+        col = 3
+      end
+      if dy == nil then
+        dy = 0
+      end
+      if max_dx == nil then
+        max_dx = 0
+      end
+      if max_dy == nil then
+        max_dy = 2
+      end
+      _class_0.__parent.__init(self, x, y, max_dx, max_dy, acc)
+      self.dy = dy
+      self.sp = sp
+      self.col = col
+      self.scl = 0
+      self.rot = 0
+    end,
+    __base = _base_0,
+    __name = "Enemy",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  Enemy = _class_0
+end
 local bullets = { }
+local enemies = { }
 local friction = 0.90
 local terrain_lines = { }
 local terrain_lines_acc = 0.05
@@ -175,15 +273,15 @@ terrain_mtns_draw = function()
   end
 end
 terrain_mtns_generate()
-local ship = Entity(60, 104, 3, 2, 0.4)
+local ship = Entity(60, 104, 3, 0, 0.4)
 ship.update = function(self)
   if btn(0) then
-    if (terrain_lines_acc < 0.12) then
+    if (terrain_lines_acc < 0.15) then
       terrain_lines_acc = terrain_lines_acc + 0.0025
     end
   end
   if btn(1) then
-    if (terrain_lines_acc >= 0.02) then
+    if (terrain_lines_acc >= 0.04) then
       terrain_lines_acc = terrain_lines_acc - 0.0025
     end
   end
@@ -202,7 +300,7 @@ ship.update = function(self)
     self.turn_l = false
   end
   if btnp(4) then
-    table.insert(bullets, Bullet(self.x, self.y, 0.05, 2))
+    table.insert(bullets, Bullet(self.x, self.y, 0.02, 1))
   end
   self.dx = self.dx * friction
   self.x = self.x + self.dx
@@ -223,6 +321,8 @@ ship.draw = function(self)
     return rect(self.x - 4, self.y + 9, 9, 1, 11)
   end
 end
+local en = Enemy(24, horizon - 2, 0.001, 1, 7, 0.5, 0, 1)
+table.insert(enemies, en)
 local planet_flight_update
 planet_flight_update = function()
   cls(4)
@@ -230,6 +330,14 @@ planet_flight_update = function()
   rect(0, horizon, s_wid, 1, 0)
   terrain_mtns_draw()
   terrain_lines_upd()
+  if #enemies > 0 then
+    for e = #enemies, 1, -1 do
+      enemies[e]:upd()
+      if not enemies[e].alive then
+        table.remove(enemies, e)
+      end
+    end
+  end
   if #bullets > 0 then
     for b = #bullets, 1, -1 do
       bullets[b]:upd()
