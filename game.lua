@@ -45,7 +45,6 @@ do
   local _parent_0 = Entity
   local _base_0 = {
     upd = function(self)
-      trace(self.dy)
       if math.abs(self.dy) < math.abs(self.max_dy) then
         if self.dy < 0 then
           self.dy = self.dy - self.acc

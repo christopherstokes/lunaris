@@ -33,7 +33,6 @@ class Bullet extends Entity
 		@col = col
 
 	upd: =>
-		trace(@dy)
 		if math.abs(@dy) < math.abs(@max_dy)
 			if @dy < 0 then @dy -= @acc
 			if @dy > 0 then @dy += @acc
